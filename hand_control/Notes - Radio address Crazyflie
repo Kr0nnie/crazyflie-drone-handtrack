@@ -1,0 +1,6 @@
+Radio address Crazyflie
+1) Connect to USB in cfclient
+2) Click Connect > Config, read Radio address.
+
+
+https://github.com/CooperControlsLab/cf_gimbal_demos/blob/devel/misc/motorstest.py
