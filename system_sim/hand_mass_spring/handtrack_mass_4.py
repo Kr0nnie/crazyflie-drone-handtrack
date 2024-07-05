@@ -102,7 +102,7 @@ while True:
     if times and positions:
         line.set_xdata(times)
         line.set_ydata(positions)
-        ax.set_xlim(0, max(times) + 1)
+        ax.set_xlim(max(times) - 15, max(times) + 1)
         ax.set_ylim(min(positions) - 1, max(positions) + 1)
         fig.canvas.draw()
         fig.canvas.flush_events()
