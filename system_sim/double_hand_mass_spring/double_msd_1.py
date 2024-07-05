@@ -14,10 +14,10 @@ from cflib.utils import uri_helper
 from cflib.positioning.motion_commander import MotionCommander
 
 # Parameters for mass-spring-damper system
-m1 = 1.0  # mass 1
+m1 = 2.0  # mass 1
 k1 = 5.0  # spring constant 1
 b1 = 0.5  # damping coefficient 1
-m2 = 1.0  # mass 2
+m2 = 2.0  # mass 2
 k2 = 3.0  # spring constant 2
 b2 = 0.3  # damping coefficient 2
 
