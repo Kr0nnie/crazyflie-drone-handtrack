@@ -68,7 +68,7 @@ def main():
         if not grabbing:
             update_simulation()
 
-        # Draw the pendulum
+        # draw pendulum
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         cv2.line(image, tuple((POINT1 * 100).astype(int)), tuple((POINT2 * 100).astype(int)), (255, 0, 0), 3)
         cv2.line(image, tuple((POINT2 * 100).astype(int)), tuple((POINT3 * 100).astype(int)), (255, 0, 0), 3)

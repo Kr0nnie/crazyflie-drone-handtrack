@@ -1,3 +1,5 @@
+# Works well; no restrictions on two drones; may collide into one another
+
 import logging
 import time
 import cv2

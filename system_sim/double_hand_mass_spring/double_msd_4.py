@@ -1,3 +1,5 @@
+#not good
+
 import logging
 import time
 import cv2
@@ -80,8 +82,8 @@ def apply_impulse_response(mass_position_1, mass_velocity_1, mass_position_2, ma
 def main():
     cflib.crtp.init_drivers()
 
-    uri1 = uri_helper.uri_from_env(default='radio://0/80/2M')
-    uri2 = uri_helper.uri_from_env(default='radio://0/81/2M')
+    uri1 = uri_helper.uri_from_env(default='radio://0/70/2M/E7E7E7E7E7')
+    uri2 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 
     hand_detector = HandDetector(detectionCon=0.8, maxHands=1)
     cap = cv2.VideoCapture(0)
@@ -128,7 +130,7 @@ def main():
                     mass_position_2 = sol.y[1, -1] 
                     mass_velocity_2 = sol.y[3, -1]
 
-                    # Ensure the drones are at least 0.3 meters apart
+                    # drones gotta be 0.3 meters apart
                     if abs(mass_position_2 - mass_position_1) < 0.3:
                         if mass_position_2 > mass_position_1:
                             mass_position_2 = mass_position_1 + 0.3
