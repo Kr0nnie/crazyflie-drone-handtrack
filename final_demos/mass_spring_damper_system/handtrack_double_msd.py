@@ -121,9 +121,12 @@ while True:
                 mass_velocity_1 = vel_sim_1[-1]
                 mass_position_2 = pos_sim_2[-1]
                 mass_velocity_2 = vel_sim_2[-1]
-                
                 real_time_start = current_time
                 real_times = [real_time_start + t for t in t_sim]
+
+                if abs(mass_position_2 - mass_position_1) < 0.3:
+                            mass_position_2 = mass_position_1 + 0.3
+
                 times.extend(real_times)
                 positions_1.extend(pos_sim_1)
                 positions_2.extend(pos_sim_2)
@@ -138,6 +141,11 @@ while True:
         mass_velocity_1 = sol.y[2, -1]
         mass_position_2 = sol.y[1, -1] 
         mass_velocity_2 = sol.y[3, -1]
+
+        # minimum distance 
+        if abs(mass_position_2 - mass_position_1) < 0.3:
+            mass_position_2 = mass_position_1 + 0.3
+
         times.append(current_time)
         positions_1.append(mass_position_1)
         positions_2.append(mass_position_2)
