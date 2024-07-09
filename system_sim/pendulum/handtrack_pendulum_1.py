@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import mediapipe as mp
+from cvzone.HandTrackingModule import HandDetector
 
 # Constants
 POINT1 = np.array([0, 1.95])
@@ -8,74 +8,76 @@ POINT2 = np.array([0, 1.05])  # Initial middle point (will be updated dynamicall
 POINT3 = np.array([0, 0.15])  # Initial bottom point (mass)
 GRAVITY = 9.81
 LENGTH = np.linalg.norm(POINT1 - POINT3)
-TIME_STEP = 0.02
+TIME_STEP = 0.05
 
-# Hand tracking setup
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands()
-mp_draw = mp.solutions.drawing_utils
+# Hand tracking init
+cap = cv2.VideoCapture(0)
+detector = HandDetector(detectionCon=0.8, maxHands=1)
+hand_grabbed = False
 
-# State variables
-grabbing = False
-
-# Simulation variables
 theta = np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0])
 omega = 0
 
-def update_simulation():
-    global theta, omega, POINT2, POINT3
+frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+center_x = frame_width // 2
+POINT1 = np.array([center_x / 100, 0])
+
+initial_theta = theta
+initial_length = LENGTH
+
+def pendulum_simulation():
+    global theta, omega, POINT2, POINT3, LENGTH
     alpha = -(GRAVITY / LENGTH) * np.sin(theta)
     omega += alpha * TIME_STEP
     theta += omega * TIME_STEP
-    x = LENGTH * np.sin(theta)
-    y = -LENGTH * np.cos(theta) + POINT1[1]
-    POINT3 = np.array([x, y])
+    x3 = LENGTH * np.sin(theta)
+    y3 = LENGTH * np.cos(theta)
+    POINT3 = np.array([x3, y3]) + POINT1
     POINT2 = (POINT1 + POINT3) / 2
 
 def main():
-    global grabbing, POINT3
-
-    cap = cv2.VideoCapture(0)
+    global hand_grabbed, POINT3, POINT2, LENGTH, theta, omega, initial_theta, initial_length
 
     while cap.isOpened():
-        success, image = cap.read()
+        success, img = cap.read()
         if not success:
-            continue
+            break
 
-        image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-        results = hands.process(image)
+        img = cv2.cvtColor(cv2.flip(img, 1), cv2.COLOR_BGR2RGB)
+        hands, img = detector.findHands(img)
 
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                mp_draw.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-                hand_pos = np.array([hand_landmarks.landmark[9].x, hand_landmarks.landmark[9].y])
+        if hands:
+            hand = hands[0]
+            lmList = hand['lmList']
+            fingers = detector.fingersUp(hand)
+            palm = lmList[9]
 
-                if grabbing:
-                    # Update Point 3 position to hand position
-                    POINT3 = hand_pos * np.array([640, 480])
-                    POINT3[1] = 480 - POINT3[1]
-                    POINT3 /= 100  # Scale for visualization
-                    POINT2 = (POINT1 + POINT3) / 2
-                else:
-                    # Check if hand is near Point 3 to grab
-                    hand_distance = np.linalg.norm(hand_pos * np.array([640, 480]) - POINT3 * 100)
-                    if hand_distance < 50:
-                        grabbing = True
+            if fingers == [0, 0, 0, 0, 0]:
+                hand_grabbed = True
+                POINT3 = np.array([(palm[0]) / 100, palm[1] / 100])
+                LENGTH = np.linalg.norm(POINT1 - POINT3)
+                initial_length = LENGTH
+                theta = np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0])
+                initial_theta = theta
+                omega = 0
+                POINT2 = (POINT1 + POINT3) / 2
+            else:
+                if hand_grabbed:
+                    hand_grabbed = False
+                    theta = initial_theta
+                    LENGTH = initial_length
 
-        else:
-            grabbing = False
+        if not hand_grabbed:
+            pendulum_simulation()
 
-        if not grabbing:
-            update_simulation()
+        # Draw pendulum
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        cv2.line(img, tuple((POINT1 * 100).astype(int)), tuple((POINT2 * 100).astype(int)), (255, 0, 0), 3)
+        cv2.line(img, tuple((POINT2 * 100).astype(int)), tuple((POINT3 * 100).astype(int)), (255, 0, 0), 3)
+        cv2.circle(img, tuple((POINT3 * 100).astype(int)), 10, (0, 0, 255), -1)
+        cv2.imshow('Pendulum Hand Tracking', img)
 
-        # draw pendulum
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        cv2.line(image, tuple((POINT1 * 100).astype(int)), tuple((POINT2 * 100).astype(int)), (255, 0, 0), 3)
-        cv2.line(image, tuple((POINT2 * 100).astype(int)), tuple((POINT3 * 100).astype(int)), (255, 0, 0), 3)
-        cv2.circle(image, tuple((POINT3 * 100).astype(int)), 10, (0, 0, 255), -1)
-        cv2.imshow('Pendulum Hand Tracking', image)
-
-        if cv2.waitKey(1) & 0xFF == 27:
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
