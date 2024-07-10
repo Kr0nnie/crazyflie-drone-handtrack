@@ -1,5 +1,3 @@
-# Works well; no restrictions on two drones; may collide into one another
-
 import logging
 import time
 import cv2
@@ -98,16 +96,15 @@ ax2.set_ylim(-2, 2)
 ax2.set_xlabel('Time (s)')
 ax2.set_ylabel('Position 2')
 
-# Get the frame width to center the hand position
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 center_x = frame_width // 2
 
-# Initialize a variable to store the last simulation end time
 last_sim_time = 0
 
-# Initialize Crazyflie URIs for two drones
-URI1 = uri_helper.uri_from_env(default='radio://0/70/2M/E7E7E7E7E7')
-URI2 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+# Initialize Crazyflie URIsqq
+URI1 = uri_helper.uri_from_env(default='radio://0/70/2M/E7E7E7E7E9')
+URI2 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E9')
 cflib.crtp.init_drivers()
 logging.basicConfig(level=logging.ERROR)
 
@@ -167,8 +164,8 @@ def main():
 
                     if fingers == [0, 0, 0, 0, 0]:
                         hand_grabbed = True
-                        wrist = lmList[0]
-                        mass_position_2 = (wrist[0] - center_x) / 150
+                        palm = lmList[0]
+                        mass_position_2 = (palm[0] - center_x) / 150
                         mass_velocity_2 = 0
                         mass_position_1, mass_velocity_1 = grab_position_1(mass_position_2)
                         times.append(current_time)
@@ -200,11 +197,19 @@ def main():
                     mass_velocity_1 = sol.y[2, -1]
                     mass_position_2 = sol.y[1, -1] 
                     mass_velocity_2 = sol.y[3, -1]
+
+                    # minimum distance 
+                    if abs(mass_position_2 - mass_position_1) < 0.3:
+                        mass_position_2 = mass_position_1 + 0.3    
+
                     times.append(current_time)
                     positions_1.append(mass_position_1)
                     positions_2.append(mass_position_2)
                     last_sim_time = current_time
 
+                # Min distance 
+                if abs(mass_position_2 - mass_position_1) < 0.3:
+                    mass_position_2 = mass_position_1 + 0.3
 
                 if times and positions_1 and positions_2:
                     line1.set_xdata(times)
@@ -217,6 +222,39 @@ def main():
                     ax2.set_ylim(min(positions_2) - 1, max(positions_2) + 1)
                     fig.canvas.draw()
                     fig.canvas.flush_events()
+
+
+                """
+                # Draw masses
+                square_size = 50
+                pos1 = int(center_x + mass_position_1 * 150)
+                pos2 = int(center_x + mass_position_2 * 150)
+                bottom_y = frame_height - square_size
+
+                # Mass 1
+                cv2.rectangle(img, (pos1 - square_size//2, bottom_y - square_size), (pos1 + square_size//2, bottom_y), (30, 30, 255), -1)
+                cv2.putText(img, "m1", (pos1 - 17, bottom_y - 15), cv2.FONT_HERSHEY_COMPLEX, 0.7, (255, 255, 255), 2)
+                # Mass 2
+                cv2.rectangle(img, (pos2 - square_size//2, bottom_y - square_size), (pos2 + square_size//2, bottom_y), (255, 77, 0), -1)
+                cv2.putText(img, "m2", (pos2 - 17, bottom_y - 15), cv2.FONT_HERSHEY_COMPLEX, 0.7, (255, 255, 255), 2)
+
+                # Draw springs + dampers
+                spring_color = (0, 255, 255)
+                damper_color = (255, 0, 255)
+                
+                # Spring 1 (left)
+                cv2.line(img, (0, bottom_y - square_size//2 - 10), (pos1 - square_size//2, bottom_y - square_size//2 - 10), spring_color, 2)
+                
+                # Damper 1 (left)
+                cv2.line(img, (0, bottom_y - square_size//2 + 10), (pos1 - square_size//2, bottom_y - square_size//2 + 10), damper_color, 2)
+                
+                # Spring 2 (between masses)
+                cv2.line(img, (pos1 + square_size//2, bottom_y - square_size//2 - 10), (pos2 - square_size//2, bottom_y - square_size//2 - 10), spring_color, 2)
+                
+                # Damper 2 (between masses)
+                cv2.line(img, (pos1 + square_size//2, bottom_y - square_size//2 + 10), (pos2 - square_size//2, bottom_y - square_size//2 + 10), damper_color, 2)
+
+                """
 
                 cv2.putText(img, f'Mass Position 1: {mass_position_1:.2f}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 cv2.putText(img, f'Mass Position 2: {mass_position_2:.2f}', (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)

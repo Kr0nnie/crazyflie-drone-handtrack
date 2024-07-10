@@ -52,6 +52,7 @@ def grab_position_1(mass_position_2):
         sol = solve_ivp(state_space_model, t_span, x0, args=(u,), t_eval=np.linspace(t_span[0], t_span[1], 1000))
         return sol.t, sol.y[0], sol.y[1]
     
+
     x0 = [mass_position_1, mass_velocity_1]
     t_span = [0, 0.1]
     t_sim, pos_grab_1, vel_grab_1 = simulate_state_space(t_span, x0, mass_position_2)
@@ -105,8 +106,8 @@ while True:
 
         if fingers == [0, 0, 0, 0, 0]:
             hand_grabbed = True
-            wrist = lmList[9]
-            mass_position_2 = (wrist[0] - center_x) / 150
+            palm = lmList[9]
+            mass_position_2 = (palm[0] - center_x) / 150
             mass_velocity_2 = 0
             mass_position_1, mass_velocity_1 = grab_position_1(mass_position_2)
             times.append(current_time)
@@ -121,12 +122,9 @@ while True:
                 mass_velocity_1 = vel_sim_1[-1]
                 mass_position_2 = pos_sim_2[-1]
                 mass_velocity_2 = vel_sim_2[-1]
+
                 real_time_start = current_time
                 real_times = [real_time_start + t for t in t_sim]
-
-                if abs(mass_position_2 - mass_position_1) < 0.3:
-                            mass_position_2 = mass_position_1 + 0.3
-
                 times.extend(real_times)
                 positions_1.extend(pos_sim_1)
                 positions_2.extend(pos_sim_2)
