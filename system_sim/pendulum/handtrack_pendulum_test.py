@@ -65,7 +65,8 @@ def main():
             lmList = hand['lmList']
             fingers = detector.fingersUp(hand)
             palm = lmList[9]
-            #print("point 3:", POINT3, "palm:", palm[1], ",", palm[0])
+            print("point 3:", POINT3, "palm:", palm[1], ",", palm[0])
+
 
             if fingers == [0, 0, 0, 0, 0]:
                 hand_grabbed = True
@@ -74,11 +75,12 @@ def main():
                 theta = np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0])
                 omega = 0
                 POINT2 = (POINT1 + POINT3) / 2
-                #print("PP 3:", POINT3, "PPalm:", palm[1], ",", palm[0])
+                print("PP 3:", POINT3   , "PPalm:", palm[1], ",", palm[0])
 
             else:
                 if hand_grabbed:
                     hand_grabbed = False
+
 
         t_eval = np.linspace(0, TIME_STEP, 10)
         if not hand_grabbed:
@@ -89,8 +91,7 @@ def main():
 
         x3 = LENGTH * np.sin(theta)
         y3 = LENGTH * np.cos(theta)
-        if not hand_grabbed:
-            POINT3 = np.array([x3, y3]) + POINT1
+        POINT3 = np.array([x3, y3]) + POINT1
         POINT2 = (POINT1 + POINT3) / 2
 
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
@@ -105,11 +106,10 @@ def main():
         point.set_data(x3, y3)
         fig.canvas.draw()
         fig.canvas.flush_events()
-        print("x3y3:",x3,y3)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
+ 
     cap.release()
     cv2.destroyAllWindows()
     plt.ioff()
@@ -117,3 +117,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

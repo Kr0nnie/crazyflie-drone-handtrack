@@ -46,8 +46,8 @@ def main():
     fig, ax = plt.subplots()
     line, = ax.plot([], [], 'b-')
     point, = ax.plot([], [], 'ro')
-    ax.set_xlim(-LENGTH - 0.1, LENGTH + 0.1)
-    ax.set_ylim(LENGTH + 0.1, -LENGTH + 0.1)
+    ax.set_xlim(-3, 3)
+    ax.set_ylim(5, -0.1)
     ax.set_aspect('equal', 'box')
     ax.set_title('Pendulum Simulation')
     fig.show()
@@ -69,12 +69,12 @@ def main():
 
             if fingers == [0, 0, 0, 0, 0]:
                 hand_grabbed = True
-                POINT3 = np.array([(palm[0]) / 100, (palm[1]) / 100])
+                POINT3 = np.array([(palm[0]) / 100, (palm[1]) / 100]) 
                 LENGTH = np.linalg.norm(POINT1 - POINT3)
-                theta = np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0])
+                theta = - np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0]) - (2/4 * np.pi)
                 omega = 0
                 POINT2 = (POINT1 + POINT3) / 2
-                #print("PP 3:", POINT3, "PPalm:", palm[1], ",", palm[0])
+                #print("PP 3:", POINT3, "PPalm:", palm[0], ",", palm[1])
 
             else:
                 if hand_grabbed:
@@ -85,7 +85,7 @@ def main():
             theta_vals, omega_vals = pendulum_simulation(theta, omega, t_eval)
             theta = theta_vals[-1]
             omega = omega_vals[-1]
-            print("point 3:", POINT3)
+            #print("point 3:", POINT3)
 
         x3 = LENGTH * np.sin(theta)
         y3 = LENGTH * np.cos(theta)
@@ -105,7 +105,8 @@ def main():
         point.set_data(x3, y3)
         fig.canvas.draw()
         fig.canvas.flush_events()
-        print("x3y3:",x3,y3)
+
+        print("P2:",POINT2, "  P3:", POINT3)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
