@@ -5,23 +5,23 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
 # Constants
-GRAVITY = 9.81
-DAMPING = 0.1
+GRAVITY = 2
+DAMPING = 0.05
 TIME_STEP = 0.05
 
-# Initial points for the pendulum
-POINT1 = np.array([0, 1.95])
-POINT2 = np.array([0, 1.05])  # Initial middle point (will be updated dynamically)
-POINT3 = np.array([0, 0.15])  # Initial bottom point (mass)
+# IC for pendulum
+POINT1 = np.array([0, 2.5])
+POINT2 = np.array([0, 1.05])  
+POINT3 = np.array([0, 0.15]) 
 LENGTH = np.linalg.norm(POINT1 - POINT3)
 
-# Hand tracking init
+# Initialize hand tracking
 cap = cv2.VideoCapture(0)
 detector = HandDetector(detectionCon=0.6, maxHands=1)
 hand_grabbed = False
 
 # Initial conditions
-theta = np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0])
+theta = 0
 omega = 0
 
 # Convert screen width to initial point for pendulum
@@ -46,8 +46,8 @@ def main():
     fig, ax = plt.subplots()
     line, = ax.plot([], [], 'b-')
     point, = ax.plot([], [], 'ro')
-    ax.set_xlim(-LENGTH - 0.1, LENGTH + 0.1)
-    ax.set_ylim(LENGTH + 0.1, -LENGTH + 0.1)
+    ax.set_xlim(-3, 3)
+    ax.set_ylim(5, -0.1)
     ax.set_aspect('equal', 'box')
     ax.set_title('Pendulum Simulation')
     fig.show()
@@ -65,34 +65,32 @@ def main():
             lmList = hand['lmList']
             fingers = detector.fingersUp(hand)
             palm = lmList[9]
-            print("point 3:", POINT3, "palm:", palm[1], ",", palm[0])
-
 
             if fingers == [0, 0, 0, 0, 0]:
                 hand_grabbed = True
-                POINT3 = np.array([(palm[0]) / 100, (palm[1]) / 100])
+                POINT3 = np.array([(palm[0]) / 100, (palm[1]) / 100]) 
                 LENGTH = np.linalg.norm(POINT1 - POINT3)
-                theta = np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0])
+                theta = - np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0]) - (1/2 * np.pi)
                 omega = 0
                 POINT2 = (POINT1 + POINT3) / 2
-                print("PP 3:", POINT3   , "PPalm:", palm[1], ",", palm[0])
+                POINT4 = (POINT1 + POINT2) / 2
 
             else:
                 if hand_grabbed:
                     hand_grabbed = False
-
 
         t_eval = np.linspace(0, TIME_STEP, 10)
         if not hand_grabbed:
             theta_vals, omega_vals = pendulum_simulation(theta, omega, t_eval)
             theta = theta_vals[-1]
             omega = omega_vals[-1]
-            print("point 3:", POINT3)
 
         x3 = LENGTH * np.sin(theta)
         y3 = LENGTH * np.cos(theta)
-        POINT3 = np.array([x3, y3]) + POINT1
+        if not hand_grabbed:
+            POINT3 = np.array([x3, y3]) + POINT1
         POINT2 = (POINT1 + POINT3) / 2
+        POINT4 = (POINT1 + POINT2) / 2
 
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
@@ -100,6 +98,8 @@ def main():
         cv2.circle(img, (int(POINT1[0] * 100), int(POINT1[1] * 100)), 10, (0, 0, 255), 2)
         cv2.circle(img, (int(POINT2[0] * 100), int(POINT2[1] * 100)), 10, (0, 0, 255), 2)
         cv2.circle(img, (int(POINT3[0] * 100), int(POINT3[1] * 100)), 10, (0, 0, 255), -1)
+        cv2.circle(img, (int(POINT4[0] * 100), int(POINT4[1] * 100)), 10, (0, 255, 0), 2)
+
         cv2.imshow('Pendulum Hand Tracking', img)
 
         line.set_data([0, x3], [0, y3])
@@ -107,9 +107,16 @@ def main():
         fig.canvas.draw()
         fig.canvas.flush_events()
 
+        P2 = (POINT2 / 1.5) - (center_x / 150)
+        P3 = (POINT3 / 1.5) - (center_x / 150)
+        P2[1] = -P2[1]
+        P3[1] = -P3[1]
+        P4 = (POINT4 / 1.5) - (center_x / 150)
+        print("P2:", P2, "  P3:", P3, "  P4:", P4)
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
- 
+
     cap.release()
     cv2.destroyAllWindows()
     plt.ioff()
@@ -117,5 +124,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

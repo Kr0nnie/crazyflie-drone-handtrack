@@ -15,16 +15,16 @@ m2 = 1.0  # mass 2
 k2 = 6.0  # spring constant 2
 b2 = 0.1  # damping coefficient 2
 
-# Hand tracking
+# Initialize hand tracking
 cap = cv2.VideoCapture(0)
 detector = HandDetector(detectionCon=0.8, maxHands=1)
+hand_grabbed = False
 
-# Initial positions and velocities
+# ICs
 mass_position_1 = -0.5
 mass_velocity_1 = 0.0
 mass_position_2 = 0.5
 mass_velocity_2 = 0.0
-hand_grabbed = False
 
 start_time = time.time()
 times = []

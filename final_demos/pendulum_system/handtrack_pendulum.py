@@ -5,23 +5,23 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
 # Constants
-GRAVITY = 9.81
-DAMPING = 0.1
+GRAVITY = 2
+DAMPING = 0.05
 TIME_STEP = 0.05
 
-# Initial points for the pendulum
-POINT1 = np.array([0, 1.95])
-POINT2 = np.array([0, 1.05])  # Initial middle point (will be updated dynamically)
-POINT3 = np.array([0, 0.15])  # Initial bottom point (mass)
+# IC for pendulum
+POINT1 = np.array([0, 2.5])
+POINT2 = np.array([0, 1.05])  
+POINT3 = np.array([0, 0.15]) 
 LENGTH = np.linalg.norm(POINT1 - POINT3)
 
-# Hand tracking init
+# Initialize hand tracking
 cap = cv2.VideoCapture(0)
 detector = HandDetector(detectionCon=0.6, maxHands=1)
 hand_grabbed = False
 
 # Initial conditions
-theta = np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0])
+theta = 0
 omega = 0
 
 # Convert screen width to initial point for pendulum
@@ -92,6 +92,7 @@ def main():
         if not hand_grabbed:
             POINT3 = np.array([x3, y3]) + POINT1
         POINT2 = (POINT1 + POINT3) / 2
+        
 
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
@@ -106,7 +107,11 @@ def main():
         fig.canvas.draw()
         fig.canvas.flush_events()
 
-        print("P2:",POINT2, "  P3:", POINT3)
+        P2 = (POINT2 / 1.5) - (center_x / 150)
+        P3 = (POINT3 / 1.5) - (center_x / 150)
+        P2[1] = -P2[1]
+        P3[1] = -P3[1]
+        print("P2:", P2, "  P3:", P3)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
