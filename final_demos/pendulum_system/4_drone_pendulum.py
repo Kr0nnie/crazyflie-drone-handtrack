@@ -17,11 +17,13 @@ from cflib.positioning.motion_commander import MotionCommander
 GRAVITY = 2
 DAMPING = 0.05
 TIME_STEP = 0.05
+MIN_LENGTH = 1.5
 
 # Pendulum initial conditions
 POINT1 = np.array([0, 2.95])
 POINT2 = np.array([0, 1.70])
 POINT3 = np.array([0, 0.35])
+POINT4 = np.array([0, 0.15])
 LENGTH = np.linalg.norm(POINT1 - POINT3)
 theta = 0
 omega = 0
@@ -37,8 +39,10 @@ center_x = frame_width // 2
 POINT1 = np.array([center_x / 100, 0])
 
 # Initialize Crazyflie URIs
-URI2 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E9')
-URI3 = uri_helper.uri_from_env(default='radio://0/90/2M/E7E7E7E7E9')
+URI1 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7F0')
+URI2 = uri_helper.uri_from_env(default='radio://0/70/2M/E7E7E7E7E9')
+URI3 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E9')
+URI4 = uri_helper.uri_from_env(default='radio://0/90/2M/E7E7E7E7E9')
 cflib.crtp.init_drivers()
 logging.basicConfig(level=logging.ERROR)
 
@@ -73,7 +77,7 @@ def start_position_logging(scf):
 
 # Main function
 def main():
-    global hand_grabbed, POINT3, POINT2, LENGTH, theta, omega
+    global hand_grabbed, POINT3, POINT2, POINT4, LENGTH, theta, omega
 
     plt.ion()
     fig, ax = plt.subplots()
@@ -85,26 +89,48 @@ def main():
     ax.set_title('Pendulum Simulation')
     fig.show()
 
-    with SyncCrazyflie(URI2, cf=Crazyflie(rw_cache='./cache')) as scf2, SyncCrazyflie(URI3, cf=Crazyflie(rw_cache='./cache')) as scf3:
+    with SyncCrazyflie(URI1, cf=Crazyflie(rw_cache='./cache')) as scf1, \
+         SyncCrazyflie(URI2, cf=Crazyflie(rw_cache='./cache')) as scf2, \
+         SyncCrazyflie(URI3, cf=Crazyflie(rw_cache='./cache')) as scf3, \
+         SyncCrazyflie(URI4, cf=Crazyflie(rw_cache='./cache')) as scf4:
+        
+        reset_estimator(scf1)
+        start_position_logging(scf1)
         reset_estimator(scf2)
         start_position_logging(scf2)
         reset_estimator(scf3)
         start_position_logging(scf3)
+        reset_estimator(scf4)
+        start_position_logging(scf4)
 
+        hlc1 = scf1.cf.high_level_commander
         hlc2 = scf2.cf.high_level_commander
         hlc3 = scf3.cf.high_level_commander
+        hlc4 = scf4.cf.high_level_commander
         
         # Take off with delays
-        hlc2.takeoff(1.05, 2.0)
-        hlc2.go_to(POINT2[0], 0, POINT2[1], 0, 3.0, relative=False)
-        print("point 2:", POINT2)
-        time.sleep(4) 
+        
 
-        hlc3.takeoff(0.15, 2.0)
-        hlc3.go_to(POINT3[0], 0, POINT3[1], 0, 3.0, relative=False)
-        print("point 3:", POINT3)
-       
-        time.sleep(4)
+        hlc4.takeoff(0.6, 2.0)
+        hlc4.go_to(POINT4[0], 1.5 - POINT4[1], 0.6, 0, 3.0, relative=False)
+        print("POINT4:", POINT4)        
+        time.sleep(2)
+
+        hlc3.takeoff(0.9, 2.0)
+        hlc3.go_to(POINT3[0], 1.5 - POINT3[1], 0.9, 0, 3.0, relative=False)
+        print("POINT3:", POINT3)        
+        time.sleep(2)
+
+
+        hlc2.takeoff(1.2, 2.0)
+        hlc2.go_to(POINT2[0], 1.5 - POINT2[1], 1.2, 0, 3.0, relative=False)
+        print("POINT2:", POINT2)        
+        time.sleep(2)
+
+        hlc1.takeoff(1.5, 2.0)
+        hlc1.go_to(POINT1[0], 1.5 - POINT1[1], 1.5, 0, 3.0, relative=False)
+        print("POINT1:", POINT1)
+        time.sleep(3)
 
         try:
             while cap.isOpened():
@@ -125,10 +151,15 @@ def main():
                         hand_grabbed = True
                         POINT3 = np.array([(palm[0]) / 100, (palm[1]) / 100])
                         LENGTH = np.linalg.norm(POINT1 - POINT3)
+                        if LENGTH < MIN_LENGTH:
+                            LENGTH = MIN_LENGTH
+                            direction = (POINT3 - POINT1) / np.linalg.norm(POINT3 - POINT1)
+                            POINT3 = POINT1 + direction * LENGTH
                         theta = - np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0]) - (1/2 * np.pi)
                         omega = 0
-                        POINT2 = (POINT1 + POINT3) / 2
-                        POINT4 = (POINT1 + POINT2) / 2
+                        POINT2 = (2 * POINT1 + POINT3) / 3
+                        POINT4 = (POINT1 + 2 * POINT3) / 3
+                        print("POINT4:", POINT4)
 
                     else:
                         if hand_grabbed:
@@ -144,8 +175,11 @@ def main():
                 y3 = LENGTH * np.cos(theta)
                 if not hand_grabbed:
                     POINT3 = np.array([x3, y3]) + POINT1
-                POINT2 = (POINT1 + POINT3) / 2
-                POINT4 = (POINT1 + POINT2) / 2
+                    if np.linalg.norm(POINT1 - POINT3) < MIN_LENGTH:
+                        POINT3 = POINT1 + (POINT3 - POINT1) / np.linalg.norm(POINT3 - POINT1) * MIN_LENGTH
+                        LENGTH = MIN_LENGTH
+                POINT2 = (2 * POINT1 + POINT3) / 3
+                POINT4 = (POINT1 + 2 * POINT3) / 3
 
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                 cv2.line(img, (int(POINT1[0] * 100), int(POINT1[1] * 100)), (int(POINT3[0] * 100), int(POINT3[1] * 100)), (255, 0, 0), 3)
@@ -161,21 +195,29 @@ def main():
                 fig.canvas.draw()
                 fig.canvas.flush_events()
 
+                P1 = (POINT1 / 1.5) - (center_x / 150)
+                P2 = (POINT2 / 1.5) - (center_x / 150)
                 P3 = (POINT3 / 1.5) - (center_x / 150)
                 P4 = (POINT4 / 1.5) - (center_x / 150)
+                P1[1] = -P1[1]
+                P2[1] = -P2[1]
                 P3[1] = -P3[1]
                 P4[1] = -P4[1]
-                print("P3:", P3, "  P4:", P4)
+                print("P1:", P1, "  P2:", P2, "  P3:", P3, "  P4:", P4)
 
-                hlc2.go_to(P4[0], 0, P4[1], 0, 0.5, relative=False)
-                hlc3.go_to(P3[0], 0, P3[1], 0, 0.5, relative=False)
+                hlc1.go_to(P1[0], 1.5 - P1[1], 1.5, 0, 0.5, relative=False)
+                hlc2.go_to(P2[0], 1.5 - P2[1], 1.2, 0, 0.5, relative=False)
+                hlc3.go_to(P3[0], 1.5 - P3[1], 0.9, 0, 0.5, relative=False)
+                hlc4.go_to(P4[0], 1.5 - P4[1], 0.6, 0, 0.5, relative=False)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
         finally:
+            hlc1.land(0, 2.0)
             hlc2.land(0, 2.0)
             hlc3.land(0, 2.0)
+            hlc4.land(0, 2.0)
             cap.release()
             cv2.destroyAllWindows()
             plt.ioff()
