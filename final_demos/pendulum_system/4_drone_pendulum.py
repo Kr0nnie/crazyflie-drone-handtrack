@@ -17,20 +17,20 @@ from cflib.positioning.motion_commander import MotionCommander
 GRAVITY = 2
 DAMPING = 0.05
 TIME_STEP = 0.05
-MIN_LENGTH = 2
+MIN_LENGTH = 1.5
 
 # Pendulum initial conditions
-POINT1 = np.array([0, 1.400])
-POINT2 = np.array([0, 0.983])
-POINT3 = np.array([0, 0.567])
-POINT4 = np.array([0, 0.150])
-LENGTH = np.linalg.norm(POINT1 - POINT4)
+init_POINT1 = np.array([0, 1.400])
+init_POINT4 = np.array([0, -0.500])
+LENGTH = np.linalg.norm(init_POINT1 - init_POINT4)
+init_POINT2 = (2 * init_POINT1 + init_POINT4) / 3
+init_POINT3 = (init_POINT1 + 2 * init_POINT4) / 3
 theta = 0
 omega = 0
 
 # Initialize hand tracking
 cap = cv2.VideoCapture(0)
-detector = HandDetector(detectionCon=0.6, maxHands=1)
+detector = HandDetector(detectionCon=0.7, maxHands=1)
 hand_grabbed = False
 
 # Convert screen width to initial point for pendulum
@@ -112,24 +112,24 @@ def main():
         # Take off with delays
         
         hlc4.takeoff(0.9, 2.0)
-        hlc4.go_to(POINT4[0], POINT4[1], 0.9, 0, 3.0, relative=False)
-        print("POINT4:", POINT4)        
-        time.sleep(2)
+        hlc4.go_to(init_POINT4[0], init_POINT4[1], 0.6, 0, 3.0, relative=False)
+        print("POINT4:", init_POINT4)        
+        time.sleep(3)
 
         hlc3.takeoff(0.6, 2.0)
-        hlc3.go_to(POINT3[0], POINT3[1], 0.6, 0, 3.0, relative=False)
-        print("POINT3:", POINT3)        
-        time.sleep(2)
+        hlc3.go_to(init_POINT3[0], init_POINT3[1], 0.9, 0, 3.0, relative=False)
+        print("POINT3:", init_POINT3)        
+        time.sleep(3)
 
         hlc2.takeoff(1.2, 2.0)
-        hlc2.go_to(POINT2[0], POINT2[1], 1.2, 0, 3.0, relative=False)
-        print("POINT2:", POINT2)        
-        time.sleep(2)
+        hlc2.go_to(init_POINT2[0], init_POINT2[1], 1.2, 0, 3.0, relative=False)
+        print("POINT2:", init_POINT2)        
+        time.sleep(3)
 
         hlc1.takeoff(1.5, 2.0)
-        hlc1.go_to(0, 1.400, 1.5, 0, 3.0, relative=False)
-        print("POINT1:", POINT1)
-        time.sleep(3)
+        hlc1.go_to(init_POINT1[0], init_POINT1[1], 1.5, 0, 3.0, relative=False)
+        print("POINT1:", init_POINT1)
+        time.sleep(2)
 
         try:
             while cap.isOpened():
@@ -139,6 +139,8 @@ def main():
 
                 img = cv2.cvtColor(cv2.flip(img, 1), cv2.COLOR_BGR2RGB)
                 hands, img = detector.findHands(img)
+
+                POINT4 = init_POINT4
 
                 if hands:
                     hand = hands[0]
@@ -158,7 +160,6 @@ def main():
                         omega = 0
                         POINT2 = (2 * POINT1 + POINT4) / 3
                         POINT3 = (POINT1 + 2 * POINT4) / 3
-                        print("POINT3:", POINT3)
 
                     else:
                         if hand_grabbed:
@@ -198,16 +199,16 @@ def main():
                 P2 = (POINT2 / 1.6) - (center_x / 160)
                 P3 = (POINT3 / 1.6) - (center_x / 160)
                 P4 = (POINT4 / 1.6) - (center_x / 160)
-                P1[1] = -( P1[1] + (center_y / 400) )
-                P2[1] = -( P2[1] + (center_y / 400) ) 
-                P3[1] = -( P3[1] + (center_y / 400) )                
-                P4[1] = -( P4[1] + (center_y / 400) )
+                P1[1] = -( P1[1] + (center_y / 350) )
+                P2[1] = -( P2[1] + (center_y / 350) ) 
+                P3[1] = -( P3[1] + (center_y / 350) )                
+                P4[1] = -( P4[1] + (center_y / 350) )
                 print("P1:", P1, "  P2:", P2, "  P3:", P3, "  P4:", P4)
 
                 hlc1.go_to(P1[0], P1[1], 1.5, 0, 0.5, relative=False)
                 hlc2.go_to(P2[0], P2[1], 1.2, 0, 0.5, relative=False)
-                hlc3.go_to(P4[0], P3[1], 0.9, 0, 0.5, relative=False)
-                hlc4.go_to(P3[0], P4[1], 0.6, 0, 0.5, relative=False)
+                hlc3.go_to(P3[0], P3[1], 0.9, 0, 0.5, relative=False)
+                hlc4.go_to(P4[0], P4[1], 0.6, 0, 0.5, relative=False)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
