@@ -20,8 +20,7 @@ detector = HandDetector(detectionCon=0.8, maxHands=1)
 hand_grabbed = False
 
 # Convert screen width to initial point
-frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-center_x = frame_width // 2
+center_x = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) // 2
 center_y = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) // 2
 
 def reset_estimator(scf):

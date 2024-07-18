@@ -106,6 +106,11 @@ def main():
         cv2.circle(img, (int(POINT4[0] * 100), int(POINT4[1] * 100)), 10, (0, 0, 255), -1)
         cv2.imshow('Pendulum Hand Tracking', img)
 
+        print("P1:", POINT1)
+        print("P2:", POINT2)
+        print("P3:", POINT3)
+        print("P4:", POINT4)
+
         line.set_data([0, x4], [0, y4])
         point.set_data(x4, y4)
         fig.canvas.draw()

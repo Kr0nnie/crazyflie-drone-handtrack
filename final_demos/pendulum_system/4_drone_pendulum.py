@@ -17,14 +17,14 @@ from cflib.positioning.motion_commander import MotionCommander
 GRAVITY = 2
 DAMPING = 0.05
 TIME_STEP = 0.05
-MIN_LENGTH = 1.5
+MIN_LENGTH = 2
 
 # Pendulum initial conditions
-POINT1 = np.array([0, 2.95])
-POINT2 = np.array([0, 1.70])
-POINT3 = np.array([0, 0.35])
-POINT4 = np.array([0, 0.15])
-LENGTH = np.linalg.norm(POINT1 - POINT3)
+POINT1 = np.array([0, 1.400])
+POINT2 = np.array([0, 0.983])
+POINT3 = np.array([0, 0.567])
+POINT4 = np.array([0, 0.150])
+LENGTH = np.linalg.norm(POINT1 - POINT4)
 theta = 0
 omega = 0
 
@@ -34,17 +34,18 @@ detector = HandDetector(detectionCon=0.6, maxHands=1)
 hand_grabbed = False
 
 # Convert screen width to initial point for pendulum
-frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-center_x = frame_width // 2
+center_x = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) // 2
+center_y = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) // 2
 POINT1 = np.array([center_x / 100, 0])
 
 # Initialize Crazyflie URIs
-URI1 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7F0')
+URI1 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E6')
 URI2 = uri_helper.uri_from_env(default='radio://0/70/2M/E7E7E7E7E9')
 URI3 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E9')
 URI4 = uri_helper.uri_from_env(default='radio://0/90/2M/E7E7E7E7E9')
 cflib.crtp.init_drivers()
 logging.basicConfig(level=logging.ERROR)
+print("Initializing drones...")
 
 # Function for pendulum dynamics
 def pendulum_state_space(t, y):
@@ -77,7 +78,7 @@ def start_position_logging(scf):
 
 # Main function
 def main():
-    global hand_grabbed, POINT3, POINT2, POINT4, LENGTH, theta, omega
+    global hand_grabbed, POINT4, POINT2, POINT3, LENGTH, theta, omega
 
     plt.ion()
     fig, ax = plt.subplots()
@@ -110,25 +111,23 @@ def main():
         
         # Take off with delays
         
-
-        hlc4.takeoff(0.6, 2.0)
-        hlc4.go_to(POINT4[0], 1.5 - POINT4[1], 0.6, 0, 3.0, relative=False)
+        hlc4.takeoff(0.9, 2.0)
+        hlc4.go_to(POINT4[0], POINT4[1], 0.9, 0, 3.0, relative=False)
         print("POINT4:", POINT4)        
         time.sleep(2)
 
-        hlc3.takeoff(0.9, 2.0)
-        hlc3.go_to(POINT3[0], 1.5 - POINT3[1], 0.9, 0, 3.0, relative=False)
+        hlc3.takeoff(0.6, 2.0)
+        hlc3.go_to(POINT3[0], POINT3[1], 0.6, 0, 3.0, relative=False)
         print("POINT3:", POINT3)        
         time.sleep(2)
 
-
         hlc2.takeoff(1.2, 2.0)
-        hlc2.go_to(POINT2[0], 1.5 - POINT2[1], 1.2, 0, 3.0, relative=False)
+        hlc2.go_to(POINT2[0], POINT2[1], 1.2, 0, 3.0, relative=False)
         print("POINT2:", POINT2)        
         time.sleep(2)
 
         hlc1.takeoff(1.5, 2.0)
-        hlc1.go_to(POINT1[0], 1.5 - POINT1[1], 1.5, 0, 3.0, relative=False)
+        hlc1.go_to(0, 1.400, 1.5, 0, 3.0, relative=False)
         print("POINT1:", POINT1)
         time.sleep(3)
 
@@ -149,17 +148,17 @@ def main():
 
                     if fingers == [0, 0, 0, 0, 0]:
                         hand_grabbed = True
-                        POINT3 = np.array([(palm[0]) / 100, (palm[1]) / 100])
-                        LENGTH = np.linalg.norm(POINT1 - POINT3)
+                        POINT4 = np.array([(palm[0]) / 100, (palm[1]) / 100])
+                        LENGTH = np.linalg.norm(POINT1 - POINT4)
                         if LENGTH < MIN_LENGTH:
                             LENGTH = MIN_LENGTH
-                            direction = (POINT3 - POINT1) / np.linalg.norm(POINT3 - POINT1)
-                            POINT3 = POINT1 + direction * LENGTH
-                        theta = - np.arctan2(POINT1[1] - POINT3[1], POINT1[0] - POINT3[0]) - (1/2 * np.pi)
+                            direction = (POINT4 - POINT1) / np.linalg.norm(POINT4 - POINT1)
+                            POINT4 = POINT1 + direction * LENGTH
+                        theta = - np.arctan2(POINT1[1] - POINT4[1], POINT1[0] - POINT4[0]) - (1/2 * np.pi)
                         omega = 0
-                        POINT2 = (2 * POINT1 + POINT3) / 3
-                        POINT4 = (POINT1 + 2 * POINT3) / 3
-                        print("POINT4:", POINT4)
+                        POINT2 = (2 * POINT1 + POINT4) / 3
+                        POINT3 = (POINT1 + 2 * POINT4) / 3
+                        print("POINT3:", POINT3)
 
                     else:
                         if hand_grabbed:
@@ -171,44 +170,44 @@ def main():
                     theta = theta_vals[-1]
                     omega = omega_vals[-1]
 
-                x3 = LENGTH * np.sin(theta)
-                y3 = LENGTH * np.cos(theta)
+                x4 = LENGTH * np.sin(theta)
+                y4 = LENGTH * np.cos(theta)
                 if not hand_grabbed:
-                    POINT3 = np.array([x3, y3]) + POINT1
-                    if np.linalg.norm(POINT1 - POINT3) < MIN_LENGTH:
-                        POINT3 = POINT1 + (POINT3 - POINT1) / np.linalg.norm(POINT3 - POINT1) * MIN_LENGTH
+                    POINT4 = np.array([x4, y4]) + POINT1
+                    if np.linalg.norm(POINT1 - POINT4) < MIN_LENGTH:
+                        POINT4 = POINT1 + (POINT4 - POINT1) / np.linalg.norm(POINT4 - POINT1) * MIN_LENGTH
                         LENGTH = MIN_LENGTH
-                POINT2 = (2 * POINT1 + POINT3) / 3
-                POINT4 = (POINT1 + 2 * POINT3) / 3
+                POINT2 = (2 * POINT1 + POINT4) / 3
+                POINT3 = (POINT1 + 2 * POINT4) / 3
 
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-                cv2.line(img, (int(POINT1[0] * 100), int(POINT1[1] * 100)), (int(POINT3[0] * 100), int(POINT3[1] * 100)), (255, 0, 0), 3)
+                cv2.line(img, (int(POINT1[0] * 100), int(POINT1[1] * 100)), (int(POINT4[0] * 100), int(POINT4[1] * 100)), (255, 0, 0), 3)
                 cv2.circle(img, (int(POINT1[0] * 100), int(POINT1[1] * 100)), 10, (0, 0, 255), 2)
                 cv2.circle(img, (int(POINT2[0] * 100), int(POINT2[1] * 100)), 10, (0, 0, 255), 2)
-                cv2.circle(img, (int(POINT3[0] * 100), int(POINT3[1] * 100)), 10, (0, 0, 255), -1)
-                cv2.circle(img, (int(POINT4[0] * 100), int(POINT4[1] * 100)), 10, (0, 255, 0), 2)
+                cv2.circle(img, (int(POINT3[0] * 100), int(POINT3[1] * 100)), 10, (0, 255, 0), 2)
+                cv2.circle(img, (int(POINT4[0] * 100), int(POINT4[1] * 100)), 10, (0, 0, 255), -1)
 
                 cv2.imshow('Pendulum Hand Tracking', img)
 
-                line.set_data([0, x3], [0, y3])
-                point.set_data(x3, y3)
+                line.set_data([0, x4], [0, y4])
+                point.set_data(x4, y4)
                 fig.canvas.draw()
                 fig.canvas.flush_events()
 
-                P1 = (POINT1 / 1.5) - (center_x / 150)
-                P2 = (POINT2 / 1.5) - (center_x / 150)
-                P3 = (POINT3 / 1.5) - (center_x / 150)
-                P4 = (POINT4 / 1.5) - (center_x / 150)
-                P1[1] = -P1[1]
-                P2[1] = -P2[1]
-                P3[1] = -P3[1]
-                P4[1] = -P4[1]
+                P1 = (POINT1 / 1.6) - (center_x / 160)
+                P2 = (POINT2 / 1.6) - (center_x / 160)
+                P3 = (POINT3 / 1.6) - (center_x / 160)
+                P4 = (POINT4 / 1.6) - (center_x / 160)
+                P1[1] = -( P1[1] + (center_y / 400) )
+                P2[1] = -( P2[1] + (center_y / 400) ) 
+                P3[1] = -( P3[1] + (center_y / 400) )                
+                P4[1] = -( P4[1] + (center_y / 400) )
                 print("P1:", P1, "  P2:", P2, "  P3:", P3, "  P4:", P4)
 
-                hlc1.go_to(P1[0], 1.5 - P1[1], 1.5, 0, 0.5, relative=False)
-                hlc2.go_to(P2[0], 1.5 - P2[1], 1.2, 0, 0.5, relative=False)
-                hlc3.go_to(P3[0], 1.5 - P3[1], 0.9, 0, 0.5, relative=False)
-                hlc4.go_to(P4[0], 1.5 - P4[1], 0.6, 0, 0.5, relative=False)
+                hlc1.go_to(P1[0], P1[1], 1.5, 0, 0.5, relative=False)
+                hlc2.go_to(P2[0], P2[1], 1.2, 0, 0.5, relative=False)
+                hlc3.go_to(P4[0], P3[1], 0.9, 0, 0.5, relative=False)
+                hlc4.go_to(P3[0], P4[1], 0.6, 0, 0.5, relative=False)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
