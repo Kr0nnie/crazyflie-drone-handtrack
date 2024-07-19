@@ -19,8 +19,13 @@ DAMPING = 0.05
 TIME_STEP = 0.05
 MIN_LENGTH = 1.5
 
+Height1 = 1.1
+Height2 = 0.95
+Height3 = 0.8
+Height4 = 0.65
+
 # Pendulum initial conditions
-init_POINT1 = np.array([0, 1.400])
+init_POINT1 = np.array([0, 1.04])
 init_POINT4 = np.array([0, -0.500])
 LENGTH = np.linalg.norm(init_POINT1 - init_POINT4)
 init_POINT2 = (2 * init_POINT1 + init_POINT4) / 3
@@ -30,7 +35,7 @@ omega = 0
 
 # Initialize hand tracking
 cap = cv2.VideoCapture(0)
-detector = HandDetector(detectionCon=0.7, maxHands=1)
+detector = HandDetector(detectionCon=0.6, maxHands=1)
 hand_grabbed = False
 
 # Convert screen width to initial point for pendulum
@@ -39,7 +44,7 @@ center_y = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) // 2
 POINT1 = np.array([center_x / 100, 0])
 
 # Initialize Crazyflie URIs
-URI1 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E6')
+URI1 = uri_helper.uri_from_env(default='radio://0/60/2M/E7E7E7E7E9')
 URI2 = uri_helper.uri_from_env(default='radio://0/70/2M/E7E7E7E7E9')
 URI3 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E9')
 URI4 = uri_helper.uri_from_env(default='radio://0/90/2M/E7E7E7E7E9')
@@ -111,25 +116,25 @@ def main():
         
         # Take off with delays
         
-        hlc4.takeoff(0.9, 2.0)
-        hlc4.go_to(init_POINT4[0], init_POINT4[1], 0.6, 0, 3.0, relative=False)
+        hlc4.takeoff(Height4, 2.0)
+        hlc4.go_to(init_POINT4[0], init_POINT4[1], Height4, 0, 3.0, relative=False)
         print("POINT4:", init_POINT4)        
         time.sleep(3)
 
-        hlc3.takeoff(0.6, 2.0)
-        hlc3.go_to(init_POINT3[0], init_POINT3[1], 0.9, 0, 3.0, relative=False)
+        hlc3.takeoff(Height3, 2.0)
+        hlc3.go_to(init_POINT3[0], init_POINT3[1], Height3, 0, 3.0, relative=False)
         print("POINT3:", init_POINT3)        
         time.sleep(3)
 
-        hlc2.takeoff(1.2, 2.0)
-        hlc2.go_to(init_POINT2[0], init_POINT2[1], 1.2, 0, 3.0, relative=False)
+        hlc2.takeoff(Height2, 2.0)
+        hlc2.go_to(init_POINT2[0], init_POINT2[1], Height2, 0, 3.0, relative=False)
         print("POINT2:", init_POINT2)        
         time.sleep(3)
 
-        hlc1.takeoff(1.5, 2.0)
-        hlc1.go_to(init_POINT1[0], init_POINT1[1], 1.5, 0, 3.0, relative=False)
+        hlc1.takeoff(Height1, 2.0)
+        hlc1.go_to(init_POINT1[0], init_POINT1[1], Height1, 0, 3.0, relative=False)
         print("POINT1:", init_POINT1)
-        time.sleep(2)
+        time.sleep(3)
 
         try:
             while cap.isOpened():
@@ -199,16 +204,16 @@ def main():
                 P2 = (POINT2 / 1.6) - (center_x / 160)
                 P3 = (POINT3 / 1.6) - (center_x / 160)
                 P4 = (POINT4 / 1.6) - (center_x / 160)
-                P1[1] = -( P1[1] + (center_y / 350) )
-                P2[1] = -( P2[1] + (center_y / 350) ) 
-                P3[1] = -( P3[1] + (center_y / 350) )                
-                P4[1] = -( P4[1] + (center_y / 350) )
+                P1[1] = -( P1[1] + (center_y / 250) )
+                P2[1] = -( P2[1] + (center_y / 250) ) 
+                P3[1] = -( P3[1] + (center_y / 250) )                
+                P4[1] = -( P4[1] + (center_y / 250) )
                 print("P1:", P1, "  P2:", P2, "  P3:", P3, "  P4:", P4)
 
-                hlc1.go_to(P1[0], P1[1], 1.5, 0, 0.5, relative=False)
-                hlc2.go_to(P2[0], P2[1], 1.2, 0, 0.5, relative=False)
-                hlc3.go_to(P3[0], P3[1], 0.9, 0, 0.5, relative=False)
-                hlc4.go_to(P4[0], P4[1], 0.6, 0, 0.5, relative=False)
+                hlc1.go_to(P1[0], P1[1], Height1, 0, 0.5, relative=False)
+                hlc2.go_to(P2[0], P2[1], Height2, 0, 0.5, relative=False)
+                hlc3.go_to(P3[0], P3[1], Height3, 0, 0.5, relative=False)
+                hlc4.go_to(P4[0], P4[1], Height4, 0, 0.5, relative=False)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break

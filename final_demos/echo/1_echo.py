@@ -9,7 +9,7 @@ from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.utils import uri_helper
 
 # Initialize Crazyflie URI
-URI = uri_helper.uri_from_env(default='radio://0/70/2M/E7E7E7E7E9')
+URI = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E9')
 
 cflib.crtp.init_drivers()
 logging.basicConfig(level=logging.ERROR)
@@ -59,21 +59,24 @@ def main():
 
                     if fingers == [0, 0, 0, 0, 0]:
                         hand_grabbed = True
-                        point3_x = (palm[0] - center_x) / 150
-                        point3_y = 2.4 - ((palm[1]) / 200)
+                        POINT_x = (palm[0] - center_x) / 160
+                        POINT_y = 2.4 - ((palm[1]) / 200)
                     else:
                         if hand_grabbed:
                             hand_grabbed = False
 
+
                 if hand_grabbed:
-                    P3 = np.array([point3_x,  point3_y])
-                    print("P3:", P3)
-                    hlc.go_to(P3[0], 0, P3[1], 0, 0.5, relative=False)
+                    POINT = np.array([POINT_x,  POINT_y])
+                    print("POINT:", POINT)
+                    hlc.go_to(POINT[0], 0, POINT[1], 0, 0.5, relative=False)
 
                 cv2.imshow('Hand Tracking', img)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
+                    
+            
 
         except KeyboardInterrupt:
             pass

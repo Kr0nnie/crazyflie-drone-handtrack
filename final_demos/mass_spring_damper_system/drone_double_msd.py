@@ -102,8 +102,8 @@ center_x = frame_width // 2
 
 last_sim_time = 0
 
-# Initialize Crazyflie URIsqq
-URI1 = uri_helper.uri_from_env(default='radio://0/70/2M/E7E7E7E7E9')
+# Initialize Crazyflie URIs
+URI1 = uri_helper.uri_from_env(default='radio://0/60/2M/E7E7E7E7E9')
 URI2 = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E9')
 cflib.crtp.init_drivers()
 logging.basicConfig(level=logging.ERROR)
@@ -224,7 +224,7 @@ def main():
                     fig.canvas.flush_events()
 
 
-                """
+                
                 # Draw masses
                 square_size = 50
                 pos1 = int(center_x + mass_position_1 * 150)
@@ -253,8 +253,6 @@ def main():
                 
                 # Damper 2 (between masses)
                 cv2.line(img, (pos1 + square_size//2, bottom_y - square_size//2 + 10), (pos2 - square_size//2, bottom_y - square_size//2 + 10), damper_color, 2)
-
-                """
 
                 cv2.putText(img, f'Mass Position 1: {mass_position_1:.2f}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 cv2.putText(img, f'Mass Position 2: {mass_position_2:.2f}', (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)

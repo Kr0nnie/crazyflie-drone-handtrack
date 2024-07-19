@@ -9,10 +9,10 @@ import time
 
 # Parameters for mass-spring-damper system
 m1 = 1.0  # mass 1
-k1 = 6.0  # spring constant 1
+k1 = 5.0  # spring constant 1
 b1 = 0.1  # damping coefficient 1
 m2 = 1.0  # mass 2
-k2 = 6.0  # spring constant 2
+k2 = 5.0  # spring constant 2
 b2 = 0.1  # damping coefficient 2
 
 # Initialize hand tracking
